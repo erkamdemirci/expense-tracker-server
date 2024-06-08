@@ -9,6 +9,8 @@ const categoryRoutes = require('./routes/category');
 const authRoutes = require('./routes/auth');
 const auditRoutes = require('./routes/audit');
 const transferRoutes = require('./routes/transfer');
+const ledgerRoutes = require('./routes/ledger');
+const accountRoutes = require('./routes/account');
 
 dotenv.config();
 
@@ -27,5 +29,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/transfer', transferRoutes);
+app.use('/api/ledger', ledgerRoutes);
+app.use('/api/account', accountRoutes);
 
 module.exports = app;

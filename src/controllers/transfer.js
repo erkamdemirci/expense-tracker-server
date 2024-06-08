@@ -17,9 +17,25 @@ exports.createTransfer = async (req, res) => {
 };
 
 exports.getTransfers = async (req, res) => {
+  const { page = 1, limit = 10 } = req.query;
+  const skip = (page - 1) * limit;
+
   try {
-    const transfers = await Transfer.find({ createdBy: req.user._id });
-    res.status(200).json(transfers);
+    const transfers = await Transfer.find().skip(skip).limit(parseInt(limit));
+    const total = await Transfer.countDocuments();
+    res.json({ transfers, total, page: parseInt(page), pages: Math.ceil(total / limit) });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getTransfer = async (req, res) => {
+  try {
+    const transfer = await Transfer.findOne({ _id: req.params.id, createdBy: req.user._id });
+    if (!transfer) {
+      return res.status(404).json({ error: 'Transfer not found' });
+    }
+    res.status(200).json(transfer);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
