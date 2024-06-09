@@ -18,6 +18,9 @@ const categorySchema = new mongoose.Schema({
     enum: ['income', 'expense'],
     required: true
   },
+  goal: {
+    type: Number
+  },
   subcategories: [
     {
       name: {
@@ -37,6 +40,11 @@ const categorySchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
+    required: true
+  },
+  ledger: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Ledger',
     required: true
   }
 });

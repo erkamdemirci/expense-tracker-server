@@ -1,6 +1,6 @@
 const express = require('express');
 const { check, validationResult } = require('express-validator');
-const { createCategory, getCategories, addSubcategory } = require('../controllers/category');
+const { createCategory, getCategories, addSubcategory, getMostExpenseCategories } = require('../controllers/category');
 const authenticateToken = require('../middleware/authMiddleware');
 const router = express.Router();
 
@@ -17,6 +17,7 @@ router.post(
 );
 
 router.get('/', authenticateToken, getCategories);
+router.get('/most-expense', authenticateToken, getMostExpenseCategories);
 
 router.post(
   '/:id/subcategories',

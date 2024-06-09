@@ -12,8 +12,6 @@ router.put('/:id', authenticateToken, updateUser);
 
 router.get('/', authenticateToken, getUsers);
 
-router.get('/me', getMe);
-
 router.post('/upload-avatar', authenticateToken, upload.single('avatar'), uploadAvatar);
 
 router.get('/avatar', authenticateToken, getAvatar);

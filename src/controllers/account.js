@@ -6,15 +6,18 @@ exports.createAccount = async (req, res) => {
     await account.save();
     res.status(201).json(account);
   } catch (error) {
+    console.log(error);
     res.status(400).json({ error: error.message });
   }
 };
 
 exports.getAccounts = async (req, res) => {
+  const { ledgerId } = req.query;
   try {
-    const accounts = await Account.find({ user: req.user._id });
+    const accounts = await Account.find({ ledger: ledgerId, user: req.user._id });
     res.status(200).json(accounts);
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -27,6 +30,7 @@ exports.getAccount = async (req, res) => {
     }
     res.status(200).json(account);
   } catch (error) {
+    console.log(error);
     res.status(400).json({ error: error.message });
   }
 };

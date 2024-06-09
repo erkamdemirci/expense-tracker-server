@@ -25,18 +25,6 @@ const ledgerSchema = new mongoose.Schema({
       ref: 'User'
     }
   ],
-  incomes: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Transfer'
-    }
-  ],
-  expenses: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Transfer'
-    }
-  ],
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

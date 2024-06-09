@@ -1,17 +1,9 @@
 const User = require('../models/user');
 
-exports.getMe = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
-    res.status(200).json(user);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
-
 exports.getUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
+    console.log(user);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -58,6 +50,7 @@ exports.uploadAvatar = async (req, res) => {
 
     res.status(200).json({ message: 'Avatar uploaded successfully' });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: 'Error uploading avatar' });
   }
 };
@@ -72,6 +65,7 @@ exports.getAvatar = async (req, res) => {
     res.contentType(user.avatar.contentType);
     res.send(user.avatar.data);
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: 'Error retrieving avatar' });
   }
 };

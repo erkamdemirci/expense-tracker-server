@@ -20,42 +20,41 @@ const transferSchema = new mongoose.Schema({
     required: true,
     default: Date.now
   },
-  type: {
-    type: String,
-    enum: ['income', 'expense'],
-    required: true
-  },
   ledger: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Ledger',
     required: true
   },
+  type: {
+    type: String,
+    enum: ['income', 'expense'],
+    required: true
+  },
+  class: {
+    type: String,
+    enum: ['oneoff', 'installment', 'recurring'],
+    required: true
+  },
   status: {
     type: String,
     enum: ['pending', 'completed', 'cancelled'],
-    default: 'pending'
+    default: function () {
+      return this.class === 'oneoff' ? 'completed' : 'pending';
+    }
   },
-  from: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Account',
-    required: true
-  },
-  to: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Account'
-  },
-  createdBy: {
+  user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  updatedBy: {
+  fromAccount: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'Account',
+    required: true
   },
-  deletedBy: {
+  toAccount: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'Account'
   },
   createdAt: {
     type: Date,

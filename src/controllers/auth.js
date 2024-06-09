@@ -29,11 +29,26 @@ exports.signup = async (req, res) => {
     await user.save();
     const token = generateToken(user._id);
 
-    // Create audit log for signup
     await createAuditLog(user._id, 'signup', `User signed up with email: ${email}`);
+
+    try {
+      const newLedger = new Ledger({
+        name: 'Kişisel Defterim',
+        currency: 'TRY',
+        balance: 0,
+        type: 'personal',
+        users: [user._id],
+        createdBy: user._id
+      });
+      await newLedger.save();
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: 'Failed to create ledger', error: error.message });
+    }
 
     res.status(201).json({ token, user });
   } catch (error) {
+    console.log(error);
     console.log(error);
     res.status(400).json({ error: 'Email already exists' });
   }
@@ -56,6 +71,7 @@ exports.login = async (req, res) => {
     delete _user.password;
     res.json({ token, user: _user });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -72,6 +88,7 @@ exports.googleLogin = async (req, res) => {
     const token = generateToken(user._id);
     res.json({ token });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

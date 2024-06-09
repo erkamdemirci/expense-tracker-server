@@ -17,6 +17,7 @@
     "cookie": "^0.6.0",
     "cookie-signature": "^1.0.6",
     "cors": "^2.8.5",
+    "dayjs": "^1.11.11",
     "debug": "^4.3.5",
     "define-data-property": "^1.1.4",
     "depd": "^2.0.0",

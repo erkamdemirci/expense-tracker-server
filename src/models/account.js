@@ -78,6 +78,11 @@ const accountSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
+  },
+  ledger: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Ledger',
+    required: true
   }
 });
 

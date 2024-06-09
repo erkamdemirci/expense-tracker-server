@@ -12,6 +12,7 @@ exports.createReceivablePayable = async (req, res) => {
     await receivablePayable.save();
     res.status(201).json(receivablePayable);
   } catch (error) {
+    console.log(error);
     res.status(400).json({ error: error.message });
   }
 };
@@ -21,6 +22,7 @@ exports.getReceivablesPayables = async (req, res) => {
     const receivablesPayables = await ReceivablePayable.find({ user: req.user._id });
     res.status(200).json(receivablesPayables);
   } catch (error) {
+    console.log(error);
     res.status(400).json({ error: error.message });
   }
 };

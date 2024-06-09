@@ -10,6 +10,7 @@ const createAuditLog = async (user, action, details = '') => {
     });
     await log.save();
   } catch (error) {
+    console.log(error);
     console.error('Failed to create audit log:', error);
   }
 };
