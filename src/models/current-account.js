@@ -1,38 +1,30 @@
 const mongoose = require("mongoose");
 
-const ledgerSchema = new mongoose.Schema({
+const currentAccountSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
+  },
+  note: {
+    type: String,
+  },
+  balance: {
+    type: Number,
+    default: 0,
   },
   currency: {
     type: String,
     required: true,
   },
-  balance: {
-    type: Number,
-    required: true,
-    default: 0,
-  },
-  type: {
-    type: String,
-    enum: ["personal", "joint"],
-    required: true,
-  },
-  users: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
-  ],
-  createdBy: {
+  user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
+  ledger: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Ledger",
+    required: true,
   },
   is_active: {
     type: Boolean,
@@ -40,4 +32,4 @@ const ledgerSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Ledger", ledgerSchema);
+module.exports = mongoose.model("CurrentAccount", currentAccountSchema);

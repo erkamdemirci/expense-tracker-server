@@ -1,52 +1,56 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const categorySchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true
+    required: true,
   },
   icon: {
     type: String,
-    required: true
+    required: true,
   },
   color: {
     type: String,
-    required: true
+    required: true,
   },
   type: {
     type: String,
-    enum: ['income', 'expense'],
-    required: true
+    enum: ["income", "expense"],
+    required: true,
   },
   goal: {
-    type: Number
+    type: Number,
   },
   subcategories: [
     {
       name: {
         type: String,
-        required: true
+        required: true,
       },
       icon: {
         type: String,
-        required: true
+        required: true,
       },
       color: {
         type: String,
-        required: true
-      }
-    }
+        required: true,
+      },
+    },
   ],
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    ref: "User",
+    required: true,
   },
   ledger: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Ledger',
-    required: true
-  }
+    ref: "Ledger",
+    required: true,
+  },
+  is_active: {
+    type: Boolean,
+    default: true,
+  },
 });
 
-module.exports = mongoose.model('Category', categorySchema);
+module.exports = mongoose.model("Category", categorySchema);

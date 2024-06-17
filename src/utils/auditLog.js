@@ -1,17 +1,17 @@
 // utils/auditLog.js
-const AuditLog = require('../models/auditLog');
+const AuditLog = require("../models/auditLog");
 
-const createAuditLog = async (user, action, details = '') => {
+const createAuditLog = async (user, action, details = "") => {
   try {
     const log = new AuditLog({
       user,
       action,
-      details
+      details,
     });
     await log.save();
   } catch (error) {
-    console.log(error);
-    console.error('Failed to create audit log:', error);
+    console.error(error);
+    console.error("Failed to create audit log:", error);
   }
 };
 

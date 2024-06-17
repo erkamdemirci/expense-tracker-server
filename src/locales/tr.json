@@ -1,0 +1,17 @@
+{
+  "personal_ledger": "Kişisel Defter",
+  "welcome_message": "Uygulamamıza hoş geldiniz! 😊",
+
+  "error": {
+    "required": "Bu alan zorunludur.",
+    "email": "Lütfen geçerli bir e-posta adresi girin.",
+    "email_already_exists": "Bu e-posta adresi zaten kullanımda.",
+    "password_mismatch": "Şifreler eşleşmiyor.",
+    "invalid_credentials": "Geçersiz e-posta veya şifre.",
+    "server_error": "Sunucuda bir hata oluştu.",
+    "not_found": "İstenen kaynak bulunamadı.",
+    "unauthorized": "Bu işlemi gerçekleştirmek için yetkiniz yok.",
+    "forbidden": "Bu işlemi gerçekleştirmenize izin verilmiyor.",
+    "validation_error": "Doğrulama hatası."
+  }
+}

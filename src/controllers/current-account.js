@@ -1,8 +1,8 @@
-const Account = require("../models/account");
+const CurrentAccount = require("../models/current-account");
 
-exports.createAccount = async (req, res) => {
+exports.createCurrentAccount = async (req, res) => {
   try {
-    const account = new Account({ ...req.body, user: req.user._id });
+    const account = new CurrentAccount({ ...req.body, user: req.user._id });
     await account.save();
     res.status(201).json(account);
   } catch (error) {
@@ -11,10 +11,10 @@ exports.createAccount = async (req, res) => {
   }
 };
 
-exports.getAccounts = async (req, res) => {
+exports.getCurrentAccounts = async (req, res) => {
   const { ledgerId } = req.query;
   try {
-    const accounts = await Account.find({
+    const accounts = await CurrentAccount.find({
       ledger: ledgerId,
       user: req.user._id,
     });
@@ -25,9 +25,9 @@ exports.getAccounts = async (req, res) => {
   }
 };
 
-exports.getAccount = async (req, res) => {
+exports.getCurrentAccount = async (req, res) => {
   try {
-    const account = await Account.findOne({
+    const account = await CurrentAccount.findOne({
       _id: req.params.id,
       user: req.user._id,
     });
