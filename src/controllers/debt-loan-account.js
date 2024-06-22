@@ -1,4 +1,5 @@
 const DebtLoanAccount = require("../models/debt-loan-account");
+const Transaction = require("../models/transaction");
 
 exports.createDebtLoanAccount = async (req, res) => {
   try {
@@ -26,14 +27,29 @@ exports.getDebtLoanAccounts = async (req, res) => {
 };
 
 exports.getDebtLoanAccount = async (req, res) => {
+  const { transactions } = req.query;
+
   try {
     const account = await DebtLoanAccount.findOne({
       _id: req.params.id,
       user: req.user._id,
     });
+
     if (!account) {
       return res.status(404).json({ error: "Account not found" });
     }
+
+    if (transactions) {
+      const transaction = await Transaction.find({
+        debtLoanAccount: account._id,
+      })
+        .populate({ path: "user", select: "username -_id" })
+        .populate({ path: "account", select: "name -_id" })
+        .populate({ path: "debtLoanAccount", select: "name" });
+
+      account.transactions = transaction;
+    }
+
     res.status(200).json(account);
   } catch (error) {
     console.error(error);

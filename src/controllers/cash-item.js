@@ -17,7 +17,9 @@ exports.getCashItems = async (req, res) => {
     const cashItems = await CashItem.find({
       ledger: ledgerId,
       user: req.user._id,
-    }).sort({ maturityDate: -1 }).populate({ path: "currentAccount", select: "name -_id" });
+    })
+      .sort({ maturityDate: -1 })
+      .populate({ path: "currentAccount", select: "name -_id" });
     res.status(200).json(cashItems);
   } catch (error) {
     console.error(error);

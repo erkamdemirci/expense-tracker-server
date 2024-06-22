@@ -1,4 +1,5 @@
 const User = require("../models/user");
+const sharp = require("sharp");
 
 exports.getUser = async (req, res) => {
   try {
@@ -20,6 +21,7 @@ exports.updateUser = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
+
     res.status(200).json(user);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -37,19 +39,24 @@ exports.getUsers = async (req, res) => {
 
 exports.uploadAvatar = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user._id).select("-password");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const processedImageBuffer = await sharp(req.file.buffer)
+      .resize({ width: 200, height: 200 })
+      .jpeg({ quality: 80 })
+      .toBuffer();
+
     user.avatar = {
-      data: req.file.buffer,
+      data: processedImageBuffer,
       contentType: req.file.mimetype,
     };
 
     await user.save();
 
-    res.status(200).json({ message: "Avatar uploaded successfully" });
+    res.status(200).json(user);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error uploading avatar" });

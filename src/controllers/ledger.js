@@ -6,6 +6,7 @@ exports.createLedger = async (req, res) => {
       ...req.body,
       createdBy: req.user._id,
       users: [req.user._id],
+      startOfMonth: req.body.startOfMonth || 1,
     });
     await ledger.save();
     res.status(201).json(ledger);
@@ -17,7 +18,10 @@ exports.createLedger = async (req, res) => {
 
 exports.getLedgers = async (req, res) => {
   try {
-    const ledgers = await Ledger.find({ createdBy: req.user._id });
+    const ledgers = await Ledger.find({ createdBy: req.user._id }).populate({
+      path: "users",
+      select: "-password",
+    });
     res.status(200).json(ledgers);
   } catch (error) {
     console.error(error);

@@ -1,9 +1,7 @@
 const Payment = require("../models/payment");
-const Transaction = require("../models/transaction");
-const dayjs = require("dayjs");
 
 exports.getPayments = async (req, res) => {
-  const { transactionClass, ledgerId, month, year } = req.query;
+  const { transactionClass, ledgerId, selectedMonthRange } = req.query;
 
   if (!ledgerId) {
     return res.status(400).json({ error: "Ledger ID is required" });
@@ -14,27 +12,35 @@ exports.getPayments = async (req, res) => {
     user: req.user._id,
   };
 
-  let startDate;
-  let endDate;
-  if (month && year) {
-    startDate = dayjs().month(month).year(year).startOf("month").toDate();
-    endDate = dayjs().month(month).year(year).endOf("month").toDate();
-  } else {
-    startDate = dayjs().startOf("month").toDate();
-    endDate = dayjs().endOf("month").toDate();
-  }
-  query.date = { $gte: startDate, $lte: endDate };
+  if (selectedMonthRange)
+    query.date = {
+      $gte: selectedMonthRange.start,
+      $lte: selectedMonthRange.end,
+    };
 
   let payments = [];
   try {
-    payments = await Payment.find(query).populate({
-      path: "transaction",
-      select: "title note transactionClass installmentPayments amount category",
-      populate: {
-        path: "category",
-        select: "name icon color",
-      },
-    });
+    payments = await Payment.find(query)
+      .sort({ date: -1 })
+      .populate({
+        path: "transaction",
+        select:
+          "title note transactionClass transactionType installmentPayments amount category currentAccount debtLoanAccount",
+        populate: [
+          {
+            path: "category",
+            select: "name icon color",
+          },
+          {
+            path: "currentAccount",
+            select: "name",
+          },
+          {
+            path: "debtLoanAccount",
+            select: "name",
+          },
+        ],
+      });
 
     if (transactionClass) {
       payments = payments.filter(
@@ -46,5 +52,32 @@ exports.getPayments = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getPayment = async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.id).populate({
+      path: "transaction",
+    });
+
+    const { transaction } = payment;
+
+    if (payment.transaction.installmentPayments) {
+      const installmentPayments = await Payment.find({
+        _id: { $in: payment.transaction.installmentPayments },
+      }).select("-__v -_id");
+
+      transaction.installmentPayments = installmentPayments;
+    }
+
+    if (!transaction) {
+      return res.status(404).json({ error: "Payment not found" });
+    }
+
+    res.status(200).json(transaction);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: error.message });
   }
 };

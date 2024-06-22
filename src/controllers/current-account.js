@@ -1,4 +1,5 @@
 const CurrentAccount = require("../models/current-account");
+const Transaction = require("../models/transaction");
 
 exports.createCurrentAccount = async (req, res) => {
   try {
@@ -26,6 +27,8 @@ exports.getCurrentAccounts = async (req, res) => {
 };
 
 exports.getCurrentAccount = async (req, res) => {
+  const { transactions } = req.query;
+
   try {
     const account = await CurrentAccount.findOne({
       _id: req.params.id,
@@ -34,6 +37,17 @@ exports.getCurrentAccount = async (req, res) => {
     if (!account) {
       return res.status(404).json({ error: "Account not found" });
     }
+
+    if (transactions) {
+      const transaction = await Transaction.find({
+        currentAccount: account._id,
+      })
+        .populate({ path: "user", select: "username -_id" })
+        .populate({ path: "account", select: "name -_id" })
+        .populate({ path: "currentAccount", select: "name" });
+      account.transactions = transaction;
+    }
+
     res.status(200).json(account);
   } catch (error) {
     console.error(error);

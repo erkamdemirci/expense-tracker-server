@@ -28,7 +28,7 @@ exports.signup = async (req, res) => {
   const { email, password, currency } = req.body;
   try {
     const username = await generateUniqueUsername();
-    const user = new User({ email, password, username });
+    const user = new User({ email, password, username, avatar: "" });
     await user.save();
     const token = generateToken(user._id);
 
@@ -105,3 +105,28 @@ exports.googleLogin = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+exports.checkUsernameAvailability = async (req, res) => {
+  const { username } = req.query;
+  const _username = username?.toLowerCase();
+  try {
+    // if (!isValidUsername(_username)) {
+    //   return res.status(400).json({ error: "Invalid username format." });
+    // }
+
+    const existingUser = await User.findOne({ username: _username });
+
+    if (existingUser) {
+      return res.status(200).json({ available: false });
+    } else {
+      return res.status(200).json({ available: true });
+    }
+  } catch (err) {
+    console.error("Error checking username availability:", err);
+    return res.status(500).json({ error: "Internal server error." });
+  }
+};
+
+// function isValidUsername(username) {
+//   return /^[a-zA-Z0-9_]{3,20}$/.test(username); // Allow letters, numbers, underscores; length 3-20
+// }

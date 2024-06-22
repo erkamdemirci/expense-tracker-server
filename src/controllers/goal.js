@@ -1,6 +1,56 @@
-const { validationResult } = require("express-validator");
 const Category = require("../models/category");
 const Transaction = require("../models/transaction");
+
+exports.getGoal = async (req, res) => {
+  try {
+    const category = await Category.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
+
+    if (!category) {
+      return res.status(404).json({
+        error: "Category not found",
+      });
+    }
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+
+    const transactions = await Transaction.find({
+      user: req.user._id,
+      category: category._id,
+      date: {
+        $gte: startDate,
+        $lte: new Date(),
+      },
+    });
+
+    const totalSpend = transactions.reduce(
+      (acc, transaction) => acc + transaction.amount,
+      0
+    );
+
+    res.status(200).json({
+      category,
+      transactions: transactions.map((t) => ({
+        ...t.toObject(),
+        category: {
+          name: category.name,
+          icon: category.icon,
+          color: category.color,
+        },
+      })),
+      spend: totalSpend,
+      target: category.goal,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({
+      error: error.message,
+    });
+  }
+};
 
 exports.getGoals = async (req, res) => {
   const { ledgerId, count } = req.query;
@@ -9,7 +59,9 @@ exports.getGoals = async (req, res) => {
     const categoriesWithGoal = await Category.find({
       user: req.user._id,
       ledger: ledgerId,
-      goal: { $exists: true },
+      goal: {
+        $exists: true,
+      },
     });
 
     const startDate = new Date();
@@ -18,8 +70,13 @@ exports.getGoals = async (req, res) => {
     const transactions = await Transaction.find({
       user: req.user._id,
       ledger: ledgerId,
-      category: { $in: categoriesWithGoal.map((category) => category._id) },
-      date: { $gte: startDate, $lte: new Date() },
+      category: {
+        $in: categoriesWithGoal.map((category) => category._id),
+      },
+      date: {
+        $gte: startDate,
+        $lte: new Date(),
+      },
     });
 
     const goals = categoriesWithGoal.map((category) => {
@@ -46,6 +103,8 @@ exports.getGoals = async (req, res) => {
     res.status(200).json(sortedGoals);
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error: error.message });
+    res.status(400).json({
+      error: error.message,
+    });
   }
 };

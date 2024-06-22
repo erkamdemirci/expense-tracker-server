@@ -1,4 +1,5 @@
 const Account = require("../models/account");
+const Transaction = require("../models/transaction");
 
 exports.createAccount = async (req, res) => {
   try {
@@ -26,6 +27,8 @@ exports.getAccounts = async (req, res) => {
 };
 
 exports.getAccount = async (req, res) => {
+  const { transactions } = req.query;
+
   try {
     const account = await Account.findOne({
       _id: req.params.id,
@@ -34,6 +37,20 @@ exports.getAccount = async (req, res) => {
     if (!account) {
       return res.status(404).json({ error: "Account not found" });
     }
+
+    if (transactions) {
+      const transaction = await Transaction.find({
+        $or: [{ account: account._id }, { toAccount: account._id }],
+      })
+        .populate({ path: "category", select: "name icon color -_id" })
+        .populate({ path: "user", select: "username -_id" })
+        .populate({ path: "account", select: "name -_id" })
+        .populate({ path: "toAccount", select: "name -_id" })
+        .populate({ path: "currentAccount", select: "name" })
+        .populate({ path: "debtLoanAccount", select: "name" });
+      account.transactions = transaction;
+    }
+
     res.status(200).json(account);
   } catch (error) {
     console.error(error);

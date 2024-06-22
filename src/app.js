@@ -47,7 +47,7 @@ app.use(bodyParser.json());
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.log(err));
+  .catch((err) => console.error(err));
 
 app.use("/api/category", categoryRoutes);
 app.use("/api/user", userRoutes);

@@ -1,4 +1,3 @@
-const { validationResult } = require("express-validator");
 const Transaction = require("../models/transaction");
 const Payment = require("../models/payment");
 const dayjs = require("dayjs");
@@ -29,6 +28,18 @@ exports.createTransaction = async (req, res) => {
       transaction.installmentPayments = paymentIds;
     }
 
+    if (["debt", "loan"].includes(transaction.transactionType)) {
+      const payment = new Payment({
+        amount: transaction.amount,
+        date: transaction.maturityDate,
+        user: req.user._id,
+        ledger: req.body.ledger,
+        transaction: transaction._id,
+      });
+      await payment.save();
+      transaction.debtLoanPayment = payment._id;
+    }
+
     await transaction.save();
     res.status(201).json(transaction);
   } catch (error) {
@@ -38,7 +49,8 @@ exports.createTransaction = async (req, res) => {
 };
 
 exports.getTransactions = async (req, res) => {
-  const { transactionClass, ledgerId, month, year, page, limit } = req.query;
+  const { transactionClass, ledgerId, page, limit, selectedMonthRange } =
+    req.query;
 
   if (!ledgerId) {
     return res.status(400).json({ error: "Ledger ID is required" });
@@ -50,38 +62,21 @@ exports.getTransactions = async (req, res) => {
     query.transactionClass = transactionClass;
   }
 
-  let startDate;
-  let endDate;
-  if (month && year) {
-    startDate = dayjs().month(month).year(year).startOf("month").toDate();
-    endDate = dayjs().month(month).year(year).endOf("month").toDate();
-  } else {
-    startDate = dayjs().startOf("month").toDate();
-    endDate = dayjs().endOf("month").toDate();
-  }
-  query.date = { $gte: startDate, $lte: endDate };
-
-  // if (page && limit) {
-  //   page = parseInt(page);
-  //   limit = parseInt(limit);
-  //   skip = (page - 1) * limit;
-  // }
+  if (selectedMonthRange)
+    query.date = {
+      $gte: selectedMonthRange.start,
+      $lte: selectedMonthRange.end,
+    };
 
   try {
-    const transactions =
-      page && limit
-        ? await Transaction.find(query)
-            .populate({ path: "category", select: "name icon color -_id" })
-            .populate({ path: "user", select: "username -_id" })
-            .populate({ path: "account", select: "name -_id" })
-            .populate({ path: "toAccount", select: "name -_id" })
-            .skip(skip)
-            .limit(limit)
-        : await Transaction.find(query)
-            .populate({ path: "category", select: "name icon color -_id" })
-            .populate({ path: "user", select: "username -_id" })
-            .populate({ path: "account", select: "name -_id" })
-            .populate({ path: "toAccount", select: "name -_id" });
+    const transactions = await Transaction.find(query)
+      .populate({ path: "category", select: "name icon color -_id" })
+      .populate({ path: "user", select: "username -_id" })
+      .populate({ path: "account", select: "name -_id" })
+      .populate({ path: "toAccount", select: "name -_id" })
+      .populate({ path: "currentAccount", select: "name" })
+      .populate({ path: "debtLoanAccount", select: "name" })
+      .sort({ date: -1 });
 
     const total = await Transaction.countDocuments(query);
     res.json({ transactions, total, page, pages: Math.ceil(total / limit) });
