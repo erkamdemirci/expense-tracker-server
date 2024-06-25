@@ -10,7 +10,7 @@ const cashItemSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    currentAccount: {
+    owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CurrentAccount",
     },
@@ -21,10 +21,17 @@ const cashItemSchema = new mongoose.Schema(
     serialNumber: {
       type: String,
     },
+    bank: {
+      type: String,
+    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+    isUsed: {
+      type: Boolean,
+      default: false,
     },
     ledger: {
       type: mongoose.Schema.Types.ObjectId,

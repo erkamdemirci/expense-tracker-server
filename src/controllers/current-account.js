@@ -5,7 +5,31 @@ exports.createCurrentAccount = async (req, res) => {
   try {
     const account = new CurrentAccount({ ...req.body, user: req.user._id });
     await account.save();
+
+    if (req.body.email) {
+      req.user.currentAccount = account._id;
+      await req.user.save();
+    }
+
     res.status(201).json(account);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+exports.updateCurrentAccount = async (req, res) => {
+  try {
+    const account = await CurrentAccount.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
+    if (!account) {
+      return res.status(404).json({ error: "Account not found" });
+    }
+
+    await account.updateOne(req.body);
+    res.status(200).json(account);
   } catch (error) {
     console.error(error);
     res.status(400).json({ error: error.message });
@@ -18,6 +42,7 @@ exports.getCurrentAccounts = async (req, res) => {
     const accounts = await CurrentAccount.find({
       ledger: ledgerId,
       user: req.user._id,
+      _id: { $ne: req.user.currentAccount },
     });
     res.status(200).json(accounts);
   } catch (error) {

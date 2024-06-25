@@ -1,6 +1,18 @@
 const User = require("../models/user");
 const sharp = require("sharp");
 
+exports.getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate("currentAccount");
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
 exports.getUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);

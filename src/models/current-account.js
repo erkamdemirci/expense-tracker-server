@@ -9,13 +9,18 @@ const currentAccountSchema = new mongoose.Schema(
     note: {
       type: String,
     },
-    balance: {
-      type: Number,
-      default: 0,
+    address: {
+      type: String,
     },
     currency: {
       type: String,
       required: true,
+    },
+    email: {
+      type: String,
+    },
+    balance: {
+      type: Number,
     },
     transactions: [
       {

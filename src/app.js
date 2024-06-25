@@ -1,4 +1,5 @@
 const express = require("express");
+const cron = require("node-cron");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
@@ -17,6 +18,7 @@ const debtLoanAccountRoutes = require("./routes/debt-loan-account");
 const cashItemRoutes = require("./routes/cash-item");
 const goalRoutes = require("./routes/goal");
 const paymentRoutes = require("./routes/payment");
+const { getCurrencyRates } = require("./services/currency");
 
 dotenv.config();
 
@@ -43,6 +45,18 @@ app.use((req, res, next) => {
 });
 
 app.use(bodyParser.json());
+let cachedCurrencyRates = null;
+
+// cron.schedule("*/60 * * * *", async () => {
+//   console.log("Fetching currency rates...");
+//   cachedCurrencyRates = await getCurrencyRates();
+// });
+
+const fetchInitialCurrencyRates = async () => {
+  console.log("Fetching initial currency rates...");
+  cachedCurrencyRates = await getCurrencyRates();
+};
+fetchInitialCurrencyRates();
 
 mongoose
   .connect(process.env.MONGO_URI)
@@ -61,5 +75,12 @@ app.use("/api/current-account", currentAccountRoutes);
 app.use("/api/debt-loan-account", debtLoanAccountRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/cash-item", cashItemRoutes);
+
+app.get("/api/currency-rates", (req, res) => {
+  if (!cachedCurrencyRates) {
+    return res.status(503).json({ message: "Currency rates not available" });
+  }
+  res.json(cachedCurrencyRates);
+});
 
 module.exports = app;

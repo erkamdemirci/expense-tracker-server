@@ -25,6 +25,10 @@ const userSchema = new mongoose.Schema(
       data: Buffer,
       contentType: String,
     },
+    currentAccount: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CurrentAccount",
+    },
     createdAt: {
       type: Date,
       default: Date.now,

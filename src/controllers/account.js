@@ -3,7 +3,11 @@ const Transaction = require("../models/transaction");
 
 exports.createAccount = async (req, res) => {
   try {
-    const account = new Account({ ...req.body, user: req.user._id });
+    console.log(req.body);
+    const account = new Account({
+      ...req.body,
+      user: req.user._id,
+    });
     await account.save();
     res.status(201).json(account);
   } catch (error) {

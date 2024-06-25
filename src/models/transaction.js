@@ -45,10 +45,10 @@ const transactionSchema = new mongoose.Schema(
       enum: [
         "collection",
         "payment",
+        "purchase",
         "sale",
         "debt",
         "loan",
-        "purchase",
         "credit-card-debt-payment",
         "cash-advance",
         "transfer-between-accounts",

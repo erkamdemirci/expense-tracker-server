@@ -10,9 +10,11 @@ const {
   getUsers,
   uploadAvatar,
   getAvatar,
+  getMe,
 } = require("../controllers/user");
 const multer = require("multer");
 
+router.get("/me", authenticateToken, getMe);
 router.get("/:id", authenticateToken, getUser);
 router.put("/", authenticateToken, updateUser);
 router.get("/", authenticateToken, getUsers);
