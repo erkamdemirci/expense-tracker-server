@@ -1,5 +1,9 @@
 const mongoose = require("mongoose");
 
+// "recurringFrequency": {
+//     "count": 1,
+//     "unit": "month"
+//   },
 const transactionSchema = new mongoose.Schema(
   {
     title: {
@@ -43,6 +47,8 @@ const transactionSchema = new mongoose.Schema(
     transactionType: {
       type: String,
       enum: [
+        "income",
+        "expense",
         "collection",
         "payment",
         "purchase",
@@ -53,18 +59,50 @@ const transactionSchema = new mongoose.Schema(
         "cash-advance",
         "transfer-between-accounts",
       ],
+      required: true,
+    },
+    recurringFrequency: {
+      count: {
+        type: Number,
+        required: function () {
+          return this.transactionRepeatType === "recurring";
+        },
+      },
+      unit: {
+        type: String,
+        enum: ["week", "month", "two-months", "six-months", "year"],
+        required: function () {
+          return this.transactionRepeatType === "recurring";
+        },
+      },
+    },
+    paymentInstrument: {
+      type: String,
+      enum: ["cash", "cash-item", "remittance"],
+      required: function () {
+        return ["payment", "collection"].includes(this.transactionType);
+      },
+    },
+    account: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Account",
+      required: function () {
+        return (
+          (["payment", "collection"].includes(this.transactionType) &&
+            ["cash", "remittance"].includes(this.paymentInstrument)) ||
+          (["income", "expense"].includes(this.transactionType) &&
+            this.transactionRepeatType === "oneoff") ||
+          ["debt", "loan"].includes(this.transactionType) ||
+          this.transactionClass === "transfer"
+        );
+      },
     },
     transactionRepeatType: {
       type: String,
       enum: ["oneoff", "installment", "recurring"],
       default: "oneoff",
-      required: true,
-    },
-    currentTransactionType: {
-      type: String,
-      enum: ["remittance", "cash", "cash-item"],
       required: function () {
-        return ["payment", "collection"].includes(this.transactionType);
+        return ["income", "expense"].includes(this.transactionType);
       },
     },
     status: {
@@ -89,17 +127,6 @@ const transactionSchema = new mongoose.Schema(
         return ["debt", "loan"].includes(this.transactionType);
       },
     },
-    account: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Account",
-      required: function () {
-        return (
-          this.transactionRepeatType === "oneoff" &&
-          this.transactionType !== "purchase" &&
-          this.transactionType !== "sale"
-        );
-      },
-    },
     toAccount: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Account",
@@ -114,6 +141,13 @@ const transactionSchema = new mongoose.Schema(
         return ["collection", "payment", "purchase", "sale"].includes(
           this.transactionType
         );
+      },
+    },
+    cashItem: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CashItem",
+      required: function () {
+        return this.paymentInstrument === "cash-item";
       },
     },
     debtLoanAccount: {

@@ -194,7 +194,7 @@ exports.getSummary = async (req, res) => {
       }
     }
 
-    const total = income - expense;
+    const total = income + expense;
 
     res.json({ income, expense, total });
   } catch (error) {
