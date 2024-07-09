@@ -14,7 +14,7 @@ exports.createCategory = async (req, res) => {
 };
 
 exports.getCategory = async (req, res) => {
-  const { transactions } = req.query;
+  const { transactions, selectedMonthRange } = req.query;
 
   try {
     const category = await Category.findOne({
@@ -27,9 +27,15 @@ exports.getCategory = async (req, res) => {
     }
 
     if (transactions) {
-      const transaction = await Transaction.find({
-        category: category._id,
-      })
+      let query = { category: category._id, user: req.user._id };
+
+      if (selectedMonthRange)
+        query.date = {
+          $gte: selectedMonthRange.start,
+          $lte: selectedMonthRange.end,
+        };
+
+      const transaction = await Transaction.find(query)
         .populate({ path: "user", select: "username -_id" })
         .populate({ path: "account", select: "name -_id" })
         .populate({ path: "category", select: "name icon color -_id" })
@@ -65,6 +71,25 @@ exports.getCategories = async (req, res) => {
       ledger: ledgerId,
     });
     res.status(200).json(categories);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+exports.updateCategory = async (req, res) => {
+  try {
+    const category = await Category.findOneAndUpdate(
+      { _id: req.params.id, user: req.user._id },
+      req.body,
+      { new: true }
+    );
+
+    if (!category) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    res.status(200).json(category);
   } catch (error) {
     console.error(error);
     res.status(400).json({ error: error.message });

@@ -70,7 +70,7 @@ const transactionSchema = new mongoose.Schema(
       },
       unit: {
         type: String,
-        enum: ["week", "month", "two-months", "six-months", "year"],
+        enum: ["day", "week", "month", "quarter", "six-months", "year"],
         required: function () {
           return this.transactionRepeatType === "recurring";
         },

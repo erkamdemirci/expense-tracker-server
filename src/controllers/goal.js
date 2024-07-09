@@ -2,6 +2,7 @@ const Category = require("../models/category");
 const Transaction = require("../models/transaction");
 
 exports.getGoal = async (req, res) => {
+  const { selectedMonthRange } = req.query;
   try {
     const category = await Category.findOne({
       _id: req.params.id,
@@ -14,17 +15,18 @@ exports.getGoal = async (req, res) => {
       });
     }
 
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
-
-    const transactions = await Transaction.find({
+    const query = {
       user: req.user._id,
       category: category._id,
-      date: {
-        $gte: startDate,
-        $lte: new Date(),
-      },
-    });
+    };
+
+    if (selectedMonthRange)
+      query.date = {
+        $gte: selectedMonthRange.start,
+        $lte: selectedMonthRange.end,
+      };
+
+    const transactions = await Transaction.find(query);
 
     const totalSpend = transactions.reduce(
       (acc, transaction) => acc + transaction.amount,
@@ -53,7 +55,7 @@ exports.getGoal = async (req, res) => {
 };
 
 exports.getGoals = async (req, res) => {
-  const { ledgerId, count } = req.query;
+  const { ledgerId, count, selectedMonthRange } = req.query;
 
   try {
     const categoriesWithGoal = await Category.find({
@@ -64,18 +66,21 @@ exports.getGoals = async (req, res) => {
       },
     });
 
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
+    const query = {
+      ledger: ledgerId,
+      user: req.user._id,
+    };
+
+    if (selectedMonthRange)
+      query.date = {
+        $gte: selectedMonthRange.start,
+        $lte: selectedMonthRange.end,
+      };
 
     const transactions = await Transaction.find({
-      user: req.user._id,
-      ledger: ledgerId,
+      ...query,
       category: {
         $in: categoriesWithGoal.map((category) => category._id),
-      },
-      date: {
-        $gte: startDate,
-        $lte: new Date(),
       },
     });
 

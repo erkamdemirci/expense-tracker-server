@@ -2,30 +2,28 @@ const Transaction = require("../models/transaction");
 const Payment = require("../models/payment");
 const dayjs = require("dayjs");
 
-// const units = ["day", "week", "two-week", "month", "six-months", "year"];
-
 exports.createTransaction = async (req, res) => {
-  try {
-    const transaction = new Transaction({
-      ...req.body,
-      user: req.user._id,
-    });
+  const transaction = new Transaction({
+    ...req.body,
+    user: req.user._id,
+  });
 
+  try {
     if (transaction.transactionRepeatType === "installment") {
       const paymentIds = [];
-      const installmentPayments = req.body.installmentPayments;
-      for (let i = 0; i < req.body.installmentPayments.length; i++) {
+      const installments = req.body.installments;
+      for (let i = 0; i < req.body.installments.length; i++) {
         const payment = new Payment({
-          ...installmentPayments[i],
+          ...installments[i],
           user: req.user._id,
           ledger: req.body.ledger,
           transaction: transaction._id,
-          installmentNumber: i + 1,
         });
         await payment.save();
         paymentIds[i] = payment._id;
       }
       transaction.installmentPayments = paymentIds;
+      delete transaction.installments;
     }
 
     if (["debt", "loan"].includes(transaction.transactionType)) {
@@ -43,6 +41,12 @@ exports.createTransaction = async (req, res) => {
     await transaction.save();
     res.status(201).json(transaction);
   } catch (error) {
+    // if error occurs, delete the transaction and payments
+    if (transaction) {
+      await Transaction.deleteOne({ _id: transaction._id });
+      await Payment.deleteMany({ transaction: transaction._id });
+    }
+
     console.error(error);
     res.status(400).json({ error: error.message });
   }
@@ -58,7 +62,7 @@ exports.getTransactions = async (req, res) => {
 
   const query = { ledger: ledgerId, user: req.user._id };
 
-  if (transactionClass) {
+  if (transactionClass !== "all") {
     query.transactionClass = transactionClass;
   }
 

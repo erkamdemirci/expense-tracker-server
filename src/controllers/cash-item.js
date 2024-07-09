@@ -43,3 +43,20 @@ exports.getCashItem = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+exports.updateCashItem = async (req, res) => {
+  try {
+    const cashItem = await CashItem.findOneAndUpdate(
+      { _id: req.params.id, user: req.user._id },
+      req.body,
+      { new: true }
+    );
+    if (!cashItem) {
+      return res.status(404).json({ error: "cashItem not found" });
+    }
+    res.status(200).json(cashItem);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: error.message });
+  }
+};

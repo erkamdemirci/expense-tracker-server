@@ -42,7 +42,7 @@ exports.getPayments = async (req, res) => {
         ],
       });
 
-    if (transactionClass) {
+    if (transactionClass !== "all") {
       payments = payments.filter(
         (payment) => payment.transaction.transactionClass === transactionClass
       );
