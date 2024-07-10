@@ -132,7 +132,7 @@ exports.updateTransaction = async (req, res) => {
 };
 
 exports.getSummary = async (req, res) => {
-  const { ledgerId } = req.query;
+  const { ledgerId, selectedMonthRange } = req.query;
 
   if (!ledgerId) {
     return res.status(400).json({ error: "Ledger ID is required" });
@@ -148,9 +148,11 @@ exports.getSummary = async (req, res) => {
       ],
     };
 
-    const startDate = dayjs().startOf("month").toDate();
-    const endDate = dayjs().endOf("month").toDate();
-    query.date = { $gte: startDate, $lte: endDate };
+    if (selectedMonthRange)
+      query.date = {
+        $gte: selectedMonthRange.start,
+        $lte: selectedMonthRange.end,
+      };
 
     const transactions = await Transaction.find(query);
 
@@ -181,7 +183,10 @@ exports.getSummary = async (req, res) => {
       const installmentPayments = await Payment.find({
         transaction: pendingTransactions[i]._id,
         status: "completed",
-        date: { $gte: startDate, $lte: endDate },
+        date: {
+          $gte: selectedMonthRange.start,
+          $lte: selectedMonthRange.end,
+        },
       });
 
       const transactionType = pendingTransactions[i].transactionClass;

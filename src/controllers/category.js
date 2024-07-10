@@ -5,7 +5,6 @@ exports.createCategory = async (req, res) => {
   try {
     const category = new Category({ ...req.body, user: req.user._id });
     await category.save();
-    console.log({ category });
     res.status(201).json(category);
   } catch (error) {
     console.error(error);
@@ -97,7 +96,7 @@ exports.updateCategory = async (req, res) => {
 };
 
 exports.getMostExpenseCategories = async (req, res) => {
-  const { ledgerId, count } = req.query;
+  const { ledgerId, count, selectedMonthRange } = req.query;
 
   try {
     const categories = await Category.find({
@@ -105,18 +104,18 @@ exports.getMostExpenseCategories = async (req, res) => {
       ledger: ledgerId,
     });
 
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
-    const endDate = new Date();
-    endDate.setMonth(endDate.getMonth() + 1);
-    endDate.setDate(0);
-
-    const transactions = await Transaction.find({
+    const query = {
       user: req.user._id,
       ledger: ledgerId,
       category: { $in: categories.map((category) => category._id) },
-      date: { $gte: startDate, $lte: endDate },
-    });
+    };
+
+    query.date = {
+      $gte: selectedMonthRange.start,
+      $lte: selectedMonthRange.end,
+    };
+
+    const transactions = await Transaction.find(query);
 
     const categoriesWithAmount = categories.map((category) => {
       const total = transactions
