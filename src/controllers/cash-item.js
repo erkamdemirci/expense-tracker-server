@@ -20,7 +20,7 @@ exports.getCashItems = async (req, res) => {
     })
       .sort({ maturityDate: -1 })
       .populate({ path: "owner", select: "name" })
-      .populate({ path: "user", select: "name surname -_id" });
+      .populate({ path: "user", select: "name surname username -_id" });
     res.status(200).json(cashItems);
   } catch (error) {
     console.error(error);

@@ -12,20 +12,19 @@ const currentAccountSchema = new mongoose.Schema(
     address: {
       type: String,
     },
-    currency: {
-      type: String,
-      required: true,
-    },
     email: {
       type: String,
     },
     balance: {
       type: Number,
+      default: 0,
+      required: false,
     },
     transactions: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Transaction",
+        required: false,
       },
     ],
     user: {

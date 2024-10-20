@@ -61,24 +61,9 @@ const transactionSchema = new mongoose.Schema(
       ],
       required: true,
     },
-    recurringFrequency: {
-      count: {
-        type: Number,
-        required: function () {
-          return this.transactionRepeatType === "recurring";
-        },
-      },
-      unit: {
-        type: String,
-        enum: ["day", "week", "month", "quarter", "six-months", "year"],
-        required: function () {
-          return this.transactionRepeatType === "recurring";
-        },
-      },
-    },
     paymentInstrument: {
       type: String,
-      enum: ["cash", "cash-item", "remittance"],
+      enum: ["cash", "cash-item", "bank-transfer"],
       required: function () {
         return ["payment", "collection"].includes(this.transactionType);
       },
@@ -89,12 +74,19 @@ const transactionSchema = new mongoose.Schema(
       required: function () {
         return (
           (["payment", "collection"].includes(this.transactionType) &&
-            ["cash", "remittance"].includes(this.paymentInstrument)) ||
+            ["cash", "bank-transfer"].includes(this.paymentInstrument)) ||
           (["income", "expense"].includes(this.transactionType) &&
             this.transactionRepeatType === "oneoff") ||
           ["debt", "loan"].includes(this.transactionType) ||
           this.transactionClass === "transfer"
         );
+      },
+    },
+    toAccount: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Account",
+      required: function () {
+        return this.transactionClass === "transfer";
       },
     },
     transactionRepeatType: {
@@ -114,7 +106,43 @@ const transactionSchema = new mongoose.Schema(
           : "pending";
       },
     },
+    installmentFrequency: {
+      count: {
+        type: Number,
+        required: function () {
+          return this.transactionRepeatType === "installment";
+        },
+      },
+      unit: {
+        type: String,
+        enum: ["day", "week", "month", "quarter", "six-months", "year"],
+        required: function () {
+          return this.transactionRepeatType === "installment";
+        },
+      },
+    },
     installmentPayments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Payment",
+      },
+    ],
+    recurringFrequency: {
+      count: {
+        type: Number,
+        required: function () {
+          return this.transactionRepeatType === "recurring";
+        },
+      },
+      unit: {
+        type: String,
+        enum: ["day", "week", "month", "quarter", "six-months", "year"],
+        required: function () {
+          return this.transactionRepeatType === "recurring";
+        },
+      },
+    },
+    recurringPayments: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Payment",
@@ -125,13 +153,6 @@ const transactionSchema = new mongoose.Schema(
       ref: "Payment",
       required: function () {
         return ["debt", "loan"].includes(this.transactionType);
-      },
-    },
-    toAccount: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Account",
-      required: function () {
-        return this.transactionClass === "transfer";
       },
     },
     currentAccount: {

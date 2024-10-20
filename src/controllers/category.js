@@ -1,5 +1,6 @@
 const Category = require("../models/category");
 const Transaction = require("../models/transaction");
+const Account = require("../models/account");
 
 exports.createCategory = async (req, res) => {
   try {
@@ -83,12 +84,25 @@ exports.updateCategory = async (req, res) => {
       req.body,
       { new: true }
     );
+    console.log(category);
 
     if (!category) {
       return res.status(404).json({ error: "Category not found" });
     }
 
     res.status(200).json(category);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+exports.deleteCategory = async (req, res) => {
+  try {
+    await Category.findOneAndDelete({ _id: req.params.id, user: req.user._id });
+    await Transaction.deleteMany({ category: req.params.id });
+    await Account.updateMany({ $pull: { categories: req.params.id } });
+    res.status(200).json({ message: "Category deleted" });
   } catch (error) {
     console.error(error);
     res.status(400).json({ error: error.message });

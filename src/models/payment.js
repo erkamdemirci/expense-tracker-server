@@ -31,6 +31,16 @@ const paymentSchema = new mongoose.Schema(
         return this.paymentRepeatType === "installment";
       },
     },
+    recurringPaymentNumber: {
+      type: Number,
+      required: function () {
+        return this.paymentRepeatType === "recurring";
+      },
+    },
+    account: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Account",
+    },
     status: {
       type: String,
       enum: ["pending", "completed"],

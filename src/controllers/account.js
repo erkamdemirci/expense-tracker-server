@@ -45,6 +45,7 @@ exports.getAccount = async (req, res) => {
       const transaction = await Transaction.find({
         $or: [{ account: account._id }, { toAccount: account._id }],
       })
+        .sort({ date: -1 })
         .populate({ path: "category", select: "name icon color -_id" })
         .populate({ path: "user", select: "username -_id" })
         .populate({ path: "account", select: "name -_id" })

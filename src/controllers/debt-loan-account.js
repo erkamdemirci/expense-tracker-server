@@ -19,7 +19,28 @@ exports.getDebtLoanAccounts = async (req, res) => {
       ledger: ledgerId,
       user: req.user._id,
     });
-    res.status(200).json(accounts);
+
+    // get transactions
+    const transactions = await Transaction.find({
+      debtLoanAccount: { $in: accounts.map((account) => account._id) },
+    });
+
+    // calculate balance for each account
+    const accountsWithBalance = accounts.map((account) => {
+      const balance = transactions.reduce((acc, transaction) => {
+        if (transaction.debtLoanAccount.equals(account._id)) {
+          if (transaction.transactionClass === "income") {
+            return acc + transaction.amount;
+          } else if (transaction.transactionClass === "expense") {
+            return acc - transaction.amount;
+          }
+        }
+        return acc;
+      }, 0);
+      return { ...account._doc, balance };
+    });
+
+    res.status(200).json(accountsWithBalance);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: error.message });
@@ -40,14 +61,14 @@ exports.getDebtLoanAccount = async (req, res) => {
     }
 
     if (transactions) {
-      const transaction = await Transaction.find({
+      const transactions = await Transaction.find({
         debtLoanAccount: account._id,
       })
         .populate({ path: "user", select: "username -_id" })
         .populate({ path: "account", select: "name -_id" })
         .populate({ path: "debtLoanAccount", select: "name" });
 
-      account.transactions = transaction;
+      account.transactions = transactions;
     }
 
     res.status(200).json(account);

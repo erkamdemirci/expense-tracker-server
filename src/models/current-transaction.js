@@ -9,7 +9,7 @@ const currentTransactionSchema = new mongoose.Schema(
     },
     paymentInstrument: {
       type: String,
-      enum: ["cash", "cash-item", "remittance"],
+      enum: ["cash", "cash-item", "bank-transfer"],
     },
     cashItem: {
       type: mongoose.Schema.Types.ObjectId,
@@ -34,7 +34,7 @@ const currentTransactionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Account",
       required: function () {
-        return ["cash", "remittance"].includes(this.paymentInstrument);
+        return ["cash", "bank-transfer"].includes(this.paymentInstrument);
       },
     },
     ledger: {

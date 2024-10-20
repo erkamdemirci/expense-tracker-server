@@ -30,6 +30,12 @@ const ledgerSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    ledgerInvites: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "LedgerInvite",
+      },
+    ],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

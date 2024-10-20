@@ -1,18 +1,49 @@
 const Transaction = require("../models/transaction");
 const Payment = require("../models/payment");
 const dayjs = require("dayjs");
+const Account = require("../models/account");
 
 exports.createTransaction = async (req, res) => {
   const transaction = new Transaction({
     ...req.body,
     user: req.user._id,
   });
+  const account =
+    transaction.account && (await Account.findById(transaction.account));
+  const toAccount =
+    transaction.toAccount && (await Account.findById(transaction.toAccount));
+
+  console.log(req.body, account, toAccount);
+
+  // check if transactionClass is expense and selected account is insufficient
+  if (
+    [
+      "expense",
+      "loan",
+      "purchase",
+      "credit-card-debt-payment",
+      "transfer-between-accounts",
+    ].includes(transaction.transactionType) &&
+    account?.balance < transaction.amount
+  ) {
+    return res
+      .status(400)
+      .json({ message: "insufficient_balance", code: "insufficient_balance" });
+  }
+
+  if (toAccount) {
+    if (transaction.transactionType === "cash-advance") {
+      if (toAccount.limit - toAccount.loan < transaction.amount) {
+        return res.status(400).json({ message: "insufficient_limit" });
+      }
+    }
+  }
 
   try {
     if (transaction.transactionRepeatType === "installment") {
       const paymentIds = [];
       const installments = req.body.installments;
-      for (let i = 0; i < req.body.installments.length; i++) {
+      for (let i = 0; i < installments.length; i++) {
         const payment = new Payment({
           ...installments[i],
           user: req.user._id,
@@ -24,6 +55,20 @@ exports.createTransaction = async (req, res) => {
       }
       transaction.installmentPayments = paymentIds;
       delete transaction.installments;
+    } else if (transaction.transactionRepeatType === "recurring") {
+      const paymentIds = [];
+      const recurringPayments = req.body.recurringPayments;
+      for (let i = 0; i < recurringPayments.length; i++) {
+        const payment = new Payment({
+          ...recurringPayments[i],
+          user: req.user._id,
+          ledger: req.body.ledger,
+          transaction: transaction._id,
+        });
+        await payment.save();
+        paymentIds.push(payment._id);
+      }
+      transaction.recurringPayments = paymentIds;
     }
 
     if (["debt", "loan"].includes(transaction.transactionType)) {
@@ -39,6 +84,33 @@ exports.createTransaction = async (req, res) => {
     }
 
     await transaction.save();
+
+    if (account) {
+      if (transaction.transactionType === "income") {
+        account.balance += transaction.amount;
+      } else if (transaction.transactionType === "expense") {
+        account.balance -= transaction.amount;
+      }
+
+      if (toAccount) {
+        if (transaction.transactionType === "credit-card-debt-payment") {
+          account.balance -= transaction.amount;
+          toAccount.loan -= transaction.amount;
+        } else if (transaction.transactionType === "cash-advance") {
+          toAccount.balance += transaction.amount;
+          account.loan += transaction.amount;
+        } else if (
+          transaction.transactionType === "transfer-between-accounts"
+        ) {
+          toAccount.balance += transaction.amount;
+          account.balance -= transaction.amount;
+        }
+        await toAccount.save();
+      }
+
+      await account.save();
+    }
+
     res.status(201).json(transaction);
   } catch (error) {
     // if error occurs, delete the transaction and payments
@@ -91,19 +163,15 @@ exports.getTransactions = async (req, res) => {
 };
 
 exports.getTransaction = async (req, res) => {
-  const { ledgerId } = req.query;
-
-  if (!ledgerId) {
-    return res.status(400).json({ error: "Ledger ID is required" });
-  }
   try {
-    const transaction = await Transaction.findOne({
-      _id: req.params.id,
-    })
+    const transaction = await Transaction.findById(req.params.id)
       .populate({ path: "category", select: "name icon color -_id" })
       .populate({ path: "user", select: "username -_id" })
       .populate({ path: "account", select: "name -_id" })
-      .populate({ path: "toAccount", select: "name -_id" });
+      .populate({ path: "toAccount", select: "name -_id" })
+      .populate({ path: "installmentPayments" });
+
+    console.log(transaction);
     if (!transaction) {
       return res.status(404).json({ error: "Transaction not found" });
     }
@@ -125,6 +193,40 @@ exports.updateTransaction = async (req, res) => {
       return res.status(404).json({ error: "Transaction not found" });
     }
     res.status(200).json(transaction);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+exports.deleteTransaction = async (req, res) => {
+  const { id } = req.params;
+  const transaction = await Transaction.findOne({
+    _id: id,
+    user: req.user._id,
+  });
+
+  console.log(transaction, req.user._id, id);
+  if (!transaction) {
+    return res.status(404).json({ error: "Transaction not found" });
+  }
+
+  try {
+    await Transaction.deleteOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
+
+    if (
+      ["installment", "recurring"].includes(transaction.transactionRepeatType)
+    ) {
+      await Payment.deleteMany({ transaction: id });
+    }
+
+    if (["debt", "loan"].includes(transaction.transactionType)) {
+      await Payment.deleteOne({ _id: transaction.debtLoanPayment });
+    }
+    res.status(200).json({ message: "Transaction deleted" });
   } catch (error) {
     console.error(error);
     res.status(400).json({ error: error.message });
@@ -203,7 +305,7 @@ exports.getSummary = async (req, res) => {
       }
     }
 
-    const total = income + expense;
+    const total = income - expense;
 
     res.json({ income, expense, total });
   } catch (error) {

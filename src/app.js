@@ -42,7 +42,7 @@ app.use((req, res, next) => {
   const userLanguage = req.headers["accept-language"] || "en";
   req.setLocale(userLanguage);
   // console the path of route that requested
-  console.log(req.path);
+  console.log(req.path, req.method);
   next();
 });
 

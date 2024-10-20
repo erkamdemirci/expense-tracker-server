@@ -44,7 +44,30 @@ exports.getCurrentAccounts = async (req, res) => {
       user: req.user._id,
       _id: { $ne: req.user.currentAccount },
     });
-    res.status(200).json(accounts);
+
+    // get transactions
+    const transactions = await Transaction.find({
+      currentAccount: { $in: accounts.map((account) => account._id) },
+    });
+
+    // calculate balance for each account
+    const accountsWithBalance = accounts.map((account) => {
+      const balance = transactions.reduce((acc, transaction) => {
+        if (transaction.currentAccount.equals(account._id)) {
+          if (transaction.transactionClass === "income") {
+            return acc + transaction.amount;
+          } else if (transaction.transactionClass === "expense") {
+            return acc - transaction.amount;
+          }
+        }
+        return acc;
+      }, 0);
+      return { ...account._doc, balance };
+    });
+
+    console.log(accountsWithBalance);
+
+    res.status(200).json(accountsWithBalance);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: error.message });
